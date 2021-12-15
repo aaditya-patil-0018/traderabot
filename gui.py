@@ -3,11 +3,19 @@ from tkinter import ttk
 import sqlite3
 from main import Tradera
 
+#-----------------------------------------------------------------------------------------------------
 con = sqlite3.connect("category.db")
 cur = con.cursor()
 
-cur.execute("SELECT * FROM categories")
-categories = cur.fetchall()
+cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
+cname = cur.fetchall()
+categories = []
+category_names = []
+c = 1
+for i in cname:
+    categories.append([c, i[0]])
+    category_names.append(i[0])
+    c += 1
 
 subcategories = {}
 
@@ -25,62 +33,166 @@ for category in categories:
 con.commit()
 con.close()
 
+#-----------------------------------------------------------------------------------------------------
+con = sqlite3.connect('subcategory.db')
+cur = con.cursor()
+
+cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
+d = cur.fetchall()
+
+sscategory = []
+for i in d:
+    sscategory.append(i[0])
+
+subsubcategory = {}
+for j in sscategory:
+    cur.execute(f"SELECT * FROM {j}")
+    e = cur.fetchall()
+    subsubcategory[j] = e
+
+con.commit()
+con.close()
+#-----------------------------------------------------------------------------------------------------
+
+con = sqlite3.connect('subsubcategory.db')
+cur = con.cursor()
+
+cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
+
+ssscategory = []
+for k in cur.fetchall():
+    ssscategory.append(k[0])
+
+subsubsubcategories = {}
+for l in ssscategory:
+    cur.execute(f"SELECT * FROM {l}")
+    f = cur.fetchall()
+    subsubsubcategories[l] = f
+
+con.commit()
+con.close()
+
+#-----------------------------------------------------------------------------------------------------
 root = Tk()
 root.title("Tradera Bot")
-root.geometry("700x500")
+root.geometry("1800x500")
 
+# Search thing
+f1 = Frame(root)
+sl = Label(f1, text="Search: ")
+sl.grid(row=0,column=0)
+search = Entry(f1)
+search.config(width=100)
+search.grid(row=0, column=1)
+f1.pack()
+
+# Cat Frame
+f2 = Frame(root)
 category_selected = ""
 subcategory_selected = ""
 
-def selectItem(a):
-    global tree1
-    global category_selected
-    curItem = tree.focus()
-    category_selected = tree.item(curItem)['values'][1]
-    tree1 = ttk.Treeview(root, height=20)
-    tree1['columns'] = ('ID', 'CATEGORY')
-    tree1.column("#0", width=0, minwidth=0)
-    tree1.column("ID", anchor=CENTER, width=100)
-    tree1.column("CATEGORY", anchor=W, width=240)
-    tree1.heading("#0", text="")
-    tree1.heading("ID", text="ID", anchor=CENTER)
-    tree1.heading("CATEGORY", text="CATEGORY", anchor=W)
-    if category_selected != "":
-        count = 0
-        for key in subcategories[category_selected]:
-            tree1.insert(parent='', index='end', iid=count, text="Parent", values=(str(count+1),key[1]))
-            count += 1
-    tree1.grid(column=1, row=0)
+def changesub(*args):
+    global drop1
+    clicked1 = StringVar()
+    clicked1.set(subcategories[clicked.get()][0])
+    drop1.destroy()
+    s = subcategories[clicked.get()]
+    drop1 = OptionMenu(f2, clicked1, *s)
+    drop1.grid(row=0, column=1, padx=18)
 
-tree = ttk.Treeview(root, height=20)
-tree['columns'] = ('ID', 'CATEGORY')
-tree.column("#0", width=0, minwidth=0)
-tree.column("ID", anchor=CENTER, width=100)
-tree.column("CATEGORY", anchor=W, width=240)
-tree.heading("#0", text="")
-tree.heading("ID", text="ID", anchor=CENTER)
-tree.heading("CATEGORY", text="CATEGORY", anchor=W)
-tree.bind('<ButtonRelease-1>', selectItem)
-count = 0
-for key in subcategories:
-    tree.insert(parent='', index='end', iid=count, text="Parent", values=(str(count+1),key))
-    count += 1
-tree.grid(column=0, row=0)
+def changesub1(*args):
+    global drop2
+    clicked2 = StringVar()
+    clicked2.set(subsubcategory[f"{clicked.get()}{clicked1.get()}"][0][1].replace(' ', ''))
+    drop2.destroy()
+    ssj = subsubcategory[f"{clicked.get()}{clicked1.get()}"]
+    ss = []
+    for rr in ssj:
+        ss.append(rr[1])
+    drop2 = OptionMenu(f2, *ss)
+    drop2.grid(row=0, column=2, padx=18)
 
-l1 = Label(root, text="CATEGORY ID").grid(row=1, column=0)
-category_box = Entry(root, width=20)
-category_box.grid(row=1, column=1)
+def changesub2(*args):
+    global drop3
+    clicked3 = StringVar()
+    a = clicked2.get()
+    tablename = a
+    if '&' in tablename:
+        tablename = tablename.replace('&', '')
+    if ',' in tablename:
+        tablename = tablename.replace(',','')   
+    if '-' in tablename:
+        tablename = tablename.replace('-','')
+    clicked3.set(subsubsubcategories[f"{clicked.get()}{clicked1.get()}{tablename}"][0])
+    drop3.destroy()
+    sss = subsubsubcategories[f"{clicked.get()}{clicked1.get()}{tablename}"]
+    drop3 = OptionMenu(f2, *sss)
+    drop3.grid(row=0, column=3, padx=18)
+#---------------------------------------------------------------------------------------------------
 
-l2 = Label(root, text="SUBCATEGORY ID").grid(row=2, column=0)
-subcategory_box = Entry(root, width=20)
-subcategory_box.grid(row=2, column=1)
+clicked = StringVar(value="Accessoarer")
+clicked.trace( "w", changesub )
+drop = OptionMenu( f2 , clicked , *category_names )
+drop.grid(row=0, column=0, padx=18)
 
-def run():
-    cb =category_box.get()
-    sb = subcategory_box.get()
-    trade = Tradera(cb, sb)
+#---------------------------------------------------------------------------------------------------
 
-submit = Button(root, text="Run", command=run)
-submit.grid(row=3, column=0)
+clicked1 = StringVar(value=subcategories[clicked.get()][0][1])
+clicked1.trace('w', changesub1)
+# clicked1.set(subcategories[clicked.get()][0][1])
+sj = subcategories[clicked.get()]
+s = []
+for r in sj:
+    s.append(r[1])
+drop1 = OptionMenu(f2, clicked1, *s)
+drop1.grid(row=0, column=1, padx=18)
+
+#---------------------------------------------------------------------------------------------------
+
+clicked2 = StringVar(value=subsubcategory[f"{clicked.get()}{clicked1.get()}"][0][1].replace(' ', ''))
+clicked2.trace('w', changesub2)
+# clicked2.set(subsubcategory[f"{clicked.get()}{clicked1.get()}"][0][1].replace(' ', ''))
+ssj = subsubcategory[f"{clicked.get()}{clicked1.get()}"]
+ss = []
+for rr in ssj:
+    ss.append(rr[1])
+drop2 = OptionMenu(f2, *ss)
+drop2.grid(row=0, column=2, padx=18)
+
+#---------------------------------------------------------------------------------------------------
+
+clicked3 = StringVar()
+a = clicked2.get()
+tablename = a
+if '&' in tablename:
+    tablename = tablename.replace('&', '')
+if ',' in tablename:
+    tablename = tablename.replace(',','')   
+if '-' in tablename:
+    tablename = tablename.replace('-','')
+clicked3.set(subsubsubcategories[f"{clicked.get()}{clicked1.get()}{tablename}"][0])
+sss = subsubsubcategories[f"{clicked.get()}{clicked1.get()}{tablename}"]
+drop3 = OptionMenu(f2, *sss)
+drop3.grid(row=0, column=3, padx=18)
+
+#---------------------------------------------------------------------------------------------------
+f2.pack(pady=9)
+#---------------------------------------------------------------------------------------------------
+
+f3 = Frame(root)
+
+buy = Button(f3, text="Buy Now")
+buy.grid(row=0, column=0, padx=18)
+
+add = Button(f3, text="Add New Search")
+add.grid(row=0, column=1, padx=18)
+
+f3.pack(pady=9)
+
+l = Label(root, text='Active Searches')
+l.pack(pady=9)
+
+cv = Canvas(root, width=500, height=250, bg='grey')
+cv.pack()
 
 root.mainloop()
