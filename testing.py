@@ -157,50 +157,53 @@ for category in range(len(category_names)):
                     cur.execute(f"CREATE TABLE {tablename}{tablename1} (id integer PRIMARY KEY, subsubcategoryname text NOT NULL)")
                 except:
                     pass
-                
-                cur.execute(f"INSERT INTO {tablename}{tablename1} (id, subsubcategoryname) VALUES(?,?)", (count-2, i.text))
+                try: 
+                    cur.execute(f"INSERT INTO {tablename}{tablename1} (id, subsubcategoryname) VALUES(?,?)", (count-2, i.text))
 
-                con.commit()
-                con.close()
-                
-                print(i.text)
-                try:
-                    if i.text.replace(' ', '') != '':
-                        i.click()
-                        
-                        tablename2 = i.text
-                        tablename2 = tablename2.replace(" ","")
-                        if '&' in tablename2:
-                            tablename2 = tablename2.replace('&', '')
-                        if ',' in tablename2:
-                            tablename2 = tablename2.replace(',','')
-                        if '-' in tablename2:
-                            tablename2 = tablename2.replace('-','') 
+                    con.commit()
+                    con.close()
+                    
+                    print(i.text)
+                    try:
+                        if i.text.replace(' ', '') != '':
+                            i.click()
+                            
+                            tablename2 = i.text
+                            tablename2 = tablename2.replace(" ","")
+                            if '&' in tablename2:
+                                tablename2 = tablename2.replace('&', '')
+                            if ',' in tablename2:
+                                tablename2 = tablename2.replace(',','')
+                            if '-' in tablename2:
+                                tablename2 = tablename2.replace('-','') 
 
 
-                        time.sleep(4)
-                        
-                        sub_sub_sub_cat = driver.find_elements_by_class_name("item-name--3qMBC")
-                        
-                        con1 = sqlite3.connect('subsubcategory.db')
-                        cur1 = con1.cursor()
+                            time.sleep(4)
+                            
+                            sub_sub_sub_cat = driver.find_elements_by_class_name("item-name--3qMBC")
+                            
+                            con1 = sqlite3.connect('subsubcategory.db')
+                            cur1 = con1.cursor()
 
-                        try:
-                            cur1.execute(f"CREATE TABLE {tablename}{tablename1}{tablename2} (id integer PRIMARY KEY, subsubsubcategoryname text NOT NULL)")
-                        except:
-                            pass
+                            try:
+                                cur1.execute(f"CREATE TABLE {tablename}{tablename1}{tablename2} (id integer PRIMARY KEY, subsubsubcategoryname text NOT NULL)")
+                            except:
+                                pass
 
-                        c2 = 1
-                        for j in sub_sub_sub_cat:
-                            if c2 > 2:
-                                print('\t>', j.text)
-                                cur1.execute(f"INSERT INTO {tablename}{tablename1}{tablename2} (id, subsubsubcategoryname) VALUES(?,?)", (c2, j.text))
-                                con1.commit()
-                            c2 += 1
-                        con1.close()
-                        driver.back()
+                            c2 = 1
+                            for j in sub_sub_sub_cat:
+                                if c2 > 2:
+                                    print('\t>', j.text)
+                                    cur1.execute(f"INSERT INTO {tablename}{tablename1}{tablename2} (id, subsubsubcategoryname) VALUES(?,?)", (c2, j.text))
+                                    con1.commit()
+                                c2 += 1
+                            con1.close()
+                            driver.back()
+                    except:
+                        print('Got Error Here!!')
+                        pass
                 except:
-                    print('Got Error Here!!')
+                    print("This Database has been Created")
                     pass
             count += 1
 
